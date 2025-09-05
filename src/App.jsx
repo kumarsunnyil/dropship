@@ -6,6 +6,7 @@ import SignupPage from "./pages/public/register/SignupPage";
 import UploadInventory from "./pages/public/inventory/UploadInventory";
 import Analytics from "./pages/public/analytics/Analytics";
 import AboutUs from "./pages/public/aboutus/AboutUs";
+import Reports from "./pages/public/reports/Reports";
 
 export const App = () => {
 	return (
@@ -19,6 +20,7 @@ export const App = () => {
 						<Route path="/upload-inventory" element={<UploadInventory />} />
 						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/signup" element={<SignupPage />} />
+						<Route path="/reports" element={<Reports />} />
 					</Routes>
 				</Router>
     </div>

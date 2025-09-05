@@ -1,31 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Menu, X } from "lucide-react";
+import { Home } from "lucide-react";
 
-function Navbar() {
+const Navbar = () => {
 	const username = useAuthStore((s) => s.user?.username ?? "");
 	const logout = useAuthStore((s) => s.logout);
-	const linkClasses = ({ isActive }) =>
-		`hover:text-gray-200 transition ${
-			isActive ? "font-semibold border-b-2 border-white" : ""
-		}`;
-
 	const [open, setOpen] = useState(false);
-	const [mobileMenu, setMobileMenu] = useState(false);
-	const navigate = useNavigate();
 	const menuRef = useRef(null);
+	const navigate = useNavigate();
 
 	const handleLogout = () => {
 		logout();
-		navigate("/"); // back to login
+		navigate("/");
 	};
 
 	useEffect(() => {
 		function onClickOutside(e) {
 			if (menuRef.current && !menuRef.current.contains(e.target)) {
 				setOpen(false);
-				setMobileMenu(false);
 			}
 		}
 		document.addEventListener("mousedown", onClickOutside);
@@ -35,33 +28,78 @@ function Navbar() {
 	return (
 		<nav className="fixed top-0 left-0 w-full bg-violet-700 text-white px-6 py-3 flex justify-between items-center shadow-md z-50">
 			{/* Left side - Brand */}
-			<div className="font-bold text-lg">
-				<NavLink
-					to="/"
-					className="flex items-center gap-2 font-bold text-lg hover:text-gray-200"
-				>
-					<Home className="w-5 h-5" />
-					<span>DropshipPro</span>
-				</NavLink>
-			</div>
+			<NavLink
+				to="/"
+				className={({ isActive }) =>
+					`flex items-center gap-2 font-bold text-lg hover:text-gray-200 ${
+						isActive ? "text-yellow-300" : ""
+					}`
+				}
+			>
+				<Home className="w-5 h-5" />
+				<span>DropshipPro</span>
+			</NavLink>
 
-			{/* Center - Desktop Menu */}
-			<div className="hidden md:flex gap-10">
-				<NavLink to="/dashboard" className={linkClasses}>
+			{/* Desktop Menu */}
+			<div className="hidden md:flex gap-8">
+				<NavLink
+					to="/dashboard"
+					className={({ isActive }) =>
+						`relative px-3 py-2 hover:text-gray-200 transition-colors duration-200
+			${
+				isActive
+					? "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-yellow-300 after:rounded"
+					: ""
+			}`
+					}
+				>
 					Dashboard
 				</NavLink>
-				<NavLink to="/upload-inventory" className={linkClasses}>
+
+				<NavLink
+					to="/upload-inventory"
+					className={({ isActive }) =>
+						`relative px-3 py-2 hover:text-gray-200 transition-colors duration-200
+			${
+				isActive
+					? "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-yellow-300 after:rounded"
+					: ""
+			}`
+					}
+				>
 					Upload Stocks
 				</NavLink>
-				<NavLink to="/analytics" className={linkClasses}>
+
+				<NavLink
+					to="/analytics"
+					className={({ isActive }) =>
+						`relative px-3 py-2 hover:text-gray-200 transition-colors duration-200
+			${
+				isActive
+					? "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-yellow-300 after:rounded"
+					: ""
+			}`
+					}
+				>
 					Analytics
 				</NavLink>
-				<NavLink to="/reports" className={linkClasses}>
+
+				<NavLink
+					to="/reports"
+					className={({ isActive }) =>
+						`relative px-3 py-2 hover:text-gray-200 transition-colors duration-200
+			${
+				isActive
+					? "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-yellow-300 after:rounded"
+					: ""
+			}`
+					}
+				>
 					Reports
 				</NavLink>
 			</div>
 
-			{/* Right side */}
+			{/* Right side - User Dropdown */}
 			<div className="relative hidden md:block" ref={menuRef}>
 				<button
 					className="flex items-center gap-2 focus:outline-none"
@@ -83,7 +121,6 @@ function Navbar() {
 					</svg>
 				</button>
 
-				{/* Dropdown */}
 				{open && (
 					<div className="absolute right-0 mt-2 w-40 bg-white text-gray-700 rounded-lg shadow-lg">
 						<button className="w-full text-left px-4 py-2 hover:bg-gray-100">
@@ -101,55 +138,8 @@ function Navbar() {
 					</div>
 				)}
 			</div>
-
-			{/* Mobile Hamburger */}
-			<div className="md:hidden">
-				<button onClick={() => setMobileMenu(!mobileMenu)}>
-					{mobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-				</button>
-			</div>
-
-			{/* Mobile Menu Dropdown */}
-			{mobileMenu && (
-				<div className="absolute top-16 left-0 w-full bg-violet-700 flex flex-col items-center gap-4 py-6 shadow-lg md:hidden z-40">
-					<NavLink
-						to="/dashboard"
-						className={linkClasses}
-						onClick={() => setMobileMenu(false)}
-					>
-						Dashboard
-					</NavLink>
-					<NavLink
-						to="/upload-inventory"
-						className={linkClasses}
-						onClick={() => setMobileMenu(false)}
-					>
-						Upload Stocks
-					</NavLink>
-					<NavLink
-						to="/analytics"
-						className={linkClasses}
-						onClick={() => setMobileMenu(false)}
-					>
-						Analytics
-					</NavLink>
-					<NavLink
-						to="/reports"
-						className={linkClasses}
-						onClick={() => setMobileMenu(false)}
-					>
-						Reports
-					</NavLink>
-					<button
-						className="mt-4 px-4 py-2 bg-white text-violet-700 rounded-md font-semibold"
-						onClick={handleLogout}
-					>
-						Logout
-					</button>
-				</div>
-			)}
 		</nav>
 	);
-}
+};
 
 export default Navbar;
