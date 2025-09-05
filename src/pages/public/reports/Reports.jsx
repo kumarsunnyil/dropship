@@ -1,100 +1,224 @@
 import { useState } from "react";
-import { Download, Search } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 
+// --- Chart Data ---
+const salesData = [
+  { month: "Jan", sales: 400, profit: 240 },
+  { month: "Feb", sales: 300, profit: 139 },
+  { month: "Mar", sales: 500, profit: 380 },
+  { month: "Apr", sales: 278, profit: 190 },
+  { month: "May", sales: 600, profit: 400 },
+  { month: "Jun", sales: 450, profit: 210 },
+];
+
+const inventoryData = [
+  { category: "Electronics", stock: 120 },
+  { category: "Clothing", stock: 90 },
+  { category: "Shoes", stock: 60 },
+  { category: "Accessories", stock: 30 },
+];
+
+const COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#F59E0B"];
+
+// --- Reports Component ---
 const Reports = () => {
-  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 3;
 
-  // Example data
-  const reports = [
-    { id: 1, title: "Sales Report Q1", date: "2025-03-01", status: "Completed" },
-    { id: 2, title: "Inventory Report", date: "2025-03-10", status: "In Progress" },
-    { id: 3, title: "Customer Feedback", date: "2025-03-15", status: "Completed" },
-    { id: 4, title: "Returns Report", date: "2025-03-20", status: "Pending" },
-  ];
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
 
-  // Filtered reports based on search
-  const filteredReports = reports.filter((report) =>
-    report.title.toLowerCase().includes(search.toLowerCase())
-  );
+  // Sorting handler
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
 
-  const handleExport = () => {
-    // Replace with real export logic (CSV/PDF API call)
-    alert("Exporting Reports...");
+  // Sorting logic
+  const sortedData = [...salesData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    if (a[sortConfig.key] < b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? -1 : 1;
+    }
+    if (a[sortConfig.key] > b[sortConfig.key]) {
+      return sortConfig.direction === "asc" ? 1 : -1;
+    }
+    return 0;
+  });
+
+  // Pagination logic
+  const indexOfLastRow = currentPage * rowsPerPage;
+  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const currentRows = sortedData.slice(indexOfFirstRow, indexOfLastRow);
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+
+  // Export CSV
+  const exportCSV = () => {
+    const headers = ["Month", "Sales", "Profit"];
+    const rows = sortedData.map((row) => [row.month, row.sales, row.profit]);
+
+    let csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+    const link = document.createElement("a");
+    link.href = encodeURI(csvContent);
+    link.download = "reports.csv";
+    link.click();
   };
 
   return (
-   <Layout>
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-violet-800">Reports</h1>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 bg-violet-700 hover:bg-violet-800 text-white px-4 py-2 rounded-lg shadow"
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </button>
-      </div>
+    <Layout>
+      <div className="p-6 space-y-10">
+        <h1 className="text-2xl font-bold text-gray-800">Reports Dashboard</h1>
 
-      {/* Search Bar */}
-      <div className="flex items-center bg-white shadow rounded-lg p-2 mb-6 w-full md:w-1/3">
-        <Search className="w-5 h-5 text-gray-500 mr-2" />
-        <input
-          type="text"
-          placeholder="Search reports..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full outline-none"
-        />
-      </div>
+        {/* Sales Trend Line Chart */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">Sales Trend</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={salesData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="sales" stroke="#6366F1" />
+              <Line type="monotone" dataKey="profit" stroke="#F59E0B" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
-      {/* Reports Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <table className="w-full border-collapse">
-          <thead className="bg-violet-700 text-white">
-            <tr>
-              <th className="p-3 text-left">#</th>
-              <th className="p-3 text-left">Title</th>
-              <th className="p-3 text-left">Date</th>
-              <th className="p-3 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredReports.length > 0 ? (
-              filteredReports.map((report) => (
-                <tr
-                  key={report.id}
-                  className="border-b hover:bg-gray-100 transition"
-                >
-                  <td className="p-3">{report.id}</td>
-                  <td className="p-3">{report.title}</td>
-                  <td className="p-3">{report.date}</td>
-                  <td
-                    className={`p-3 font-medium ${
-                      report.status === "Completed"
-                        ? "text-green-600"
-                        : report.status === "Pending"
-                        ? "text-yellow-600"
-                        : "text-blue-600"
-                    }`}
+        {/* Sales Comparison Bar Chart */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">Monthly Sales Comparison</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={salesData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="sales" fill="#6366F1" />
+              <Bar dataKey="profit" fill="#F59E0B" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Inventory Distribution Pie Chart */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <h2 className="text-lg font-semibold mb-4">Inventory Distribution</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={inventoryData}
+                dataKey="stock"
+                nameKey="category"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                fill="#8884d8"
+                label
+              >
+                {inventoryData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Table with Pagination + Sorting + Export */}
+        <div className="bg-white rounded-2xl shadow p-4">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Sales Data Table</h2>
+            <button
+              onClick={exportCSV}
+              className="bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-700"
+            >
+              Export CSV
+            </button>
+          </div>
+
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-gray-100 text-left">
+                {["month", "sales", "profit"].map((key) => (
+                  <th
+                    key={key}
+                    className="py-2 px-4 border-b cursor-pointer"
+                    onClick={() => handleSort(key)}
                   >
-                    {report.status}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
-                  No reports found.
-                </td>
+                    <div className="flex items-center justify-between">
+                      <span className="capitalize">{key}</span>
+                      {sortConfig.key === key ? (
+                        sortConfig.direction === "asc" ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )
+                      ) : (
+                        <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+                      )}
+                    </div>
+                  </th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentRows.map((row, idx) => (
+                <tr key={idx} className="hover:bg-gray-50">
+                  <td className="py-2 px-4 border-b">{row.month}</td>
+                  <td className="py-2 px-4 border-b">{row.sales}</td>
+                  <td className="py-2 px-4 border-b">{row.profit}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+              className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
     </Layout>
   );
 };

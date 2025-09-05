@@ -2,143 +2,127 @@ import Layout from "@/components/layout/Layout";
 import { useState } from "react";
 
 const UploadInventory = () => {
-  const [fileName, setFileName] = useState("");
   const [inventory, setInventory] = useState([]);
 
-  // Handle File Upload (JSON + XML)
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    setFileName(file.name);
-
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        if (file.type === "application/json" || file.name.endsWith(".json")) {
-          const jsonData = JSON.parse(e.target.result);
-          setInventory(jsonData);
-        } else if (
-          file.type === "text/xml" ||
-          file.type === "application/xml" ||
-          file.name.endsWith(".xml")
-        ) {
+        if (file.name.endsWith(".json")) {
+          setInventory(JSON.parse(e.target.result));
+        } else if (file.name.endsWith(".xml")) {
           const parser = new DOMParser();
           const xmlDoc = parser.parseFromString(e.target.result, "application/xml");
-          const products = Array.from(xmlDoc.getElementsByTagName("product")).map(
-            (prod) => ({
-              product_id: prod.getElementsByTagName("product_id")[0]?.textContent || "",
-              title: prod.getElementsByTagName("title")[0]?.textContent || "",
-              sku: prod.getElementsByTagName("sku")[0]?.textContent || "",
-              quantity: prod.getElementsByTagName("quantity")[0]?.textContent || "",
-              status: prod.getElementsByTagName("status")[0]?.textContent || "",
-            })
-          );
-          setInventory(products);
+
+          const parseNodes = (tagName, mapFn) =>
+            Array.from(xmlDoc.getElementsByTagName(tagName)).map(mapFn);
+
+          const capitalProducts = parseNodes("Product", (prod) => ({
+            product_id: prod.getElementsByTagName("SKU")[0]?.textContent || "",
+            title: prod.getElementsByTagName("Title")[0]?.textContent || "",
+            quantity: prod.getElementsByTagName("Quantity")[0]?.textContent || "",
+            price: prod.getElementsByTagName("Price")[0]?.textContent || "",
+          }));
+
+          const lowercaseProducts = parseNodes("product", (prod) => ({
+            product_id: prod.getElementsByTagName("product_id")[0]?.textContent || "",
+            title: prod.getElementsByTagName("title")[0]?.textContent || "",
+            quantity: prod.getElementsByTagName("quantity")[0]?.textContent || "",
+            price: "",
+          }));
+
+          setInventory([...capitalProducts, ...lowercaseProducts]);
         } else {
           alert("Please upload a valid JSON or XML file");
         }
       } catch (err) {
-        console.error(err);
         alert("Invalid file format");
       }
     };
     reader.readAsText(file);
   };
 
-  // Send to backend (example POST)
   const handleSubmit = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/inventory/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inventory),
-      });
-
-      if (res.ok) {
-        alert("Inventory uploaded successfully 🚀");
-      } else {
-        alert("Upload failed ❌");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error uploading inventory");
-    }
+    await fetch("http://localhost:5000/api/inventory/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(inventory),
+    });
+    alert("Uploaded successfully 🚀");
   };
 
   return (
-    <>
-      <Layout>
+    <Layout>
+      <div className="min-h-screen bg-gray-50 py-12 px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+            📦 Upload Inventory
+          </h1>
 
-      <div className="bg-purple-600 py-14 w-full min-h-screen space-y-6">
-        <h1 className="text-2xl font-bold text-white">📦 Upload Inventory</h1>
-
-        {/* File Upload */}
-        <div className="bg-white p-6 rounded-lg shadow space-y-4">
-          <input
-            type="file"
-            accept=".json,.xml"
-            onChange={handleFileUpload}
-            className="block w-full border p-2 rounded cursor-pointer"
-          />
-          {fileName && (
-            <p className="text-sm text-gray-600">Uploaded: {fileName}</p>
-          )}
-          <button
-            onClick={handleSubmit}
-            disabled={!inventory.length}
-            className={`px-4 py-2 rounded text-white ${
-              inventory.length
-                ? "bg-violet-600 hover:bg-violet-700"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-          >
-            Upload to Server
-          </button>
-        </div>
-
-        {/* Preview Table */}
-        {inventory.length > 0 && (
-          <div className="bg-white shadow rounded-lg p-4">
-            <h2 className="text-lg font-semibold mb-4">Preview Inventory</h2>
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="p-2">Product ID</th>
-                  <th className="p-2">Title</th>
-                  <th className="p-2">SKU</th>
-                  <th className="p-2">Quantity</th>
-                  <th className="p-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventory.map((item, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="p-2">{item.product_id}</td>
-                    <td className="p-2">{item.title}</td>
-                    <td className="p-2">{item.sku}</td>
-                    <td className="p-2">{item.quantity}</td>
-                    <td
-                      className={`p-2 font-medium ${
-                        item.status === "low_stock"
-                          ? "text-yellow-600"
-                          : item.status === "overstock"
-                          ? "text-blue-600"
-                          : "text-green-600"
-                      }`}
-                    >
-                      {item.status}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Upload Card */}
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <p className="text-gray-600 mb-4">
+              Upload your <span className="font-semibold">JSON</span> or{" "}
+              <span className="font-semibold">XML</span> file to preview and save
+              your inventory.
+            </p>
+            <input
+              type="file"
+              accept=".json,.xml"
+              onChange={handleFileUpload}
+              className="block w-full border rounded-md p-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-        )}
-      </div>
 
-      </Layout>
-    </>
+          {/* Table + Button */}
+          {inventory.length > 0 && (
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold text-gray-700">
+                  Preview Inventory
+                </h2>
+                <button
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Upload to Server
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm border border-gray-200 rounded-lg">
+                  <thead className="bg-gray-100 text-gray-700 text-left">
+                    <tr>
+                      <th className="p-3 border">Product ID</th>
+                      <th className="p-3 border">Title</th>
+                      <th className="p-3 border">Quantity</th>
+                      <th className="p-3 border">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {inventory.map((item, i) => (
+                      <tr
+                        key={i}
+                        className="hover:bg-gray-50 transition border-b last:border-0"
+                      >
+                        <td className="p-3">{item.product_id}</td>
+                        <td className="p-3">{item.title}</td>
+                        <td className="p-3">{item.quantity}</td>
+                        <td className="p-3">{item.price}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Layout>
   );
 };
 
