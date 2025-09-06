@@ -3,6 +3,9 @@ import { useState } from "react";
 
 const UploadInventory = () => {
   const [inventory, setInventory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -54,16 +57,27 @@ const UploadInventory = () => {
     alert("Uploaded successfully 🚀");
   };
 
+  // Filter inventory by search
+  const filteredInventory = inventory.filter(
+    (item) =>
+      item.product_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedInventory = filteredInventory.slice(startIndex, endIndex);
+
   return (
     <Layout>
-      <div className="min-h-screen bg-gray-50 py-12 px-6">
+      <div className="min-h-screen bg-gray-50 py-6 px-3">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
             📦 Upload Inventory
           </h1>
 
-          {/* Upload Card */}
           <div className="bg-white rounded-xl shadow-md p-6 mb-8">
             <p className="text-gray-600 mb-4">
               Upload your <span className="font-semibold">JSON</span> or{" "}
@@ -78,13 +92,24 @@ const UploadInventory = () => {
             />
           </div>
 
-          {/* Table + Button */}
           {inventory.length > 0 && (
             <div className="bg-white rounded-xl shadow-md p-6">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
                 <h2 className="text-lg font-semibold text-gray-700">
                   Preview Inventory
                 </h2>
+
+                <input
+                  type="text"
+                  placeholder="Search by Product ID or Title..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1); // reset page on search
+                  }}
+                  className="border rounded-md p-2 w-full md:w-1/3 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+
                 <button
                   onClick={handleSubmit}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -93,31 +118,62 @@ const UploadInventory = () => {
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border border-gray-200 rounded-lg">
-                  <thead className="bg-gray-100 text-gray-700 text-left">
-                    <tr>
-                      <th className="p-3 border">Product ID</th>
-                      <th className="p-3 border">Title</th>
-                      <th className="p-3 border">Quantity</th>
-                      <th className="p-3 border">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {inventory.map((item, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-gray-50 transition border-b last:border-0"
-                      >
-                        <td className="p-3">{item.product_id}</td>
-                        <td className="p-3">{item.title}</td>
-                        <td className="p-3">{item.quantity}</td>
-                        <td className="p-3">{item.price}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedInventory.length > 0 ? (
+                  paginatedInventory.map((item, i) => (
+                    <div
+                      key={i}
+                      className="border border-gray-300 rounded-lg p-4 shadow-sm hover:border-purple-700 hover:shadow-md transition bg-gray-50"
+                    >
+                      <div className="mb-2">
+                        <span className="font-semibold">Product ID:</span>{" "}
+                        <span>{item.product_id}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">Title:</span>{" "}
+                        <span>{item.title}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">Quantity:</span>{" "}
+                        <span>{item.quantity}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-semibold">Price:</span>{" "}
+                        <span>{item.price}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center text-gray-500">
+                    No products found.
+                  </div>
+                )}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-4 mt-6">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 transition"
+                  >
+                    Previous
+                  </button>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
