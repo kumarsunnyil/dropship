@@ -2,7 +2,7 @@ import LoginPage from "./pages/public/loginpage/LoginPage";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/public/home/Home";
 import Dashboard from "./pages/public/dashboard/Dashboard";
-import SignupPage from "./pages/public/register/SignupPage";
+import SignupPage from "./pages/public/signup/SignupPage";
 import UploadInventory from "./pages/public/inventory/UploadInventory";
 import Analytics from "./pages/public/analytics/Analytics";
 import AboutUs from "./pages/public/aboutus/AboutUs";
